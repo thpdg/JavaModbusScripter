@@ -1,15 +1,16 @@
 import java.io.IOException;
-import java.io.InputStream;
+// import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
+// import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.StringTokenizer; //import java.util.Random;
+import java.util.StringTokenizer;
+//import java.util.Random;
 
 import net.wimpi.modbus.Modbus;
 import net.wimpi.modbus.ModbusException;
@@ -60,25 +61,31 @@ public class CmdServer {
 	static ServerSocket myServer = null;
 	static Boolean asServer = false;
 
-	public static void main(String[] args) {
-		// if (args.length==1){
-		if (args[0].contains("erver")) {
-			ip = args[1];
-			unitID = Integer.parseInt(args[2]);
-			System.out.println("Running Server on " + ip + ";");
-			asServer = true;
+	public static Integer SERVER_SOCKET = 33123;
 
-		} else {
+	public static void main(String[] args) {
+		if(args.length<3) {
 			PrintHelp();
 			return;
 		}
-		// }
-		// else{
-		// if (args.length < 4) {
-		// PrintHelp();
-		// return;
-		// }
-		// }
+
+		ip = args[1];
+		unitID = Integer.parseInt(args[2]);
+
+		switch (args[0].toLowerCase()) {
+			case "server":
+				// Run as server
+				System.out.println("Running Server for " + ip + ":" + unitID + ";");
+				asServer = true;
+				break;
+			case "script":
+				// Run script
+				System.out.println("Running command for " + ip + ":" + unitID + ";");
+				break;
+			default:
+				PrintHelp();
+				return;
+		}
 
 		if (asServer) {
 			// String outCommands = new String("-1/3/-4/-5/4/-2/05");
@@ -87,10 +94,10 @@ public class CmdServer {
 			// String inSensors = new String("11/12/10/0/7");
 
 			try {
-				myServer = new ServerSocket(33123);
-				System.out.println("Created Command Server");
+				myServer = new ServerSocket(SERVER_SOCKET);
+				System.out.println("Successfully created Command Server on socket " + SERVER_SOCKET);
 			} catch (IOException e1) {
-				System.out.println("Unable To Create Command Server");
+				System.out.println("Unable To create Command Server on socket " + SERVER_SOCKET);
 				myServer = null;
 			}
 
@@ -99,8 +106,7 @@ public class CmdServer {
 					Socket connection = myServer.accept();
 					InetAddress ia = connection.getInetAddress();
 
-					System.out.println("	Socket Accepted on "
-							+ ia.getHostAddress());
+					System.out.println("	Socket Accepted on " + ia.getHostAddress());
 					ProcessCommands(connection);
 					connection.close();
 					System.out.println("	Socket Closed");
@@ -111,14 +117,10 @@ public class CmdServer {
 				break;
 			}
 		} else {
-			StringTokenizer OutputCommandTokens = new StringTokenizer(args[1],
-					"/");
-			StringTokenizer SensorCommandTokens = new StringTokenizer(args[2],
-					"/");
-			if (OutputCommandTokens.countTokens() != SensorCommandTokens
-					.countTokens()) {
-				System.out
-						.println("Usage: ModBus ip OutputSequence SensorSequence timeout");
+			StringTokenizer OutputCommandTokens = new StringTokenizer(args[1], "/");
+			StringTokenizer SensorCommandTokens = new StringTokenizer(args[2], "/");
+			if (OutputCommandTokens.countTokens() != SensorCommandTokens.countTokens()) {
+				System.out.println("Usage: ModBus ip OutputSequence SensorSequence timeout");
 				System.out.println(" Exception - OutputSequence length ("
 						+ OutputCommandTokens.countTokens()
 						+ ") must equal SensorSequence length ("
@@ -126,12 +128,9 @@ public class CmdServer {
 				return;
 			}
 
-			ip = args[0];
-			// unitID = Integer.parseInt(args[2]);
-			timeout = Integer.parseInt(args[3]);
+			timeout = Integer.parseInt(args[3]);  // This is wrong
 
-			System.out.println("Starting Command Server w " + args.length
-					+ " args");
+			System.out.println("Processing script with " + args.length + " args");
 
 			ArrayList<ACommand> myCommands = new ArrayList<ACommand>(20);
 			while (OutputCommandTokens.hasMoreTokens()) {
